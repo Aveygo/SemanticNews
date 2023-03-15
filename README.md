@@ -45,3 +45,6 @@ as well as the initial population and vectorisation of articles.
 Got any other rss source you want to see added? Chuck in a pull request for sources.py and Ill see to it.
 
 Remember to give this repo a ⭐ if you found it useful.
+
+[comment]: <> (tags: open source google news alternative)
+[comment]: <> (tags: open news reader rss self hosted)
