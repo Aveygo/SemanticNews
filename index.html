@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Simple Headline Reader</title>
+    <link rel="icon" type="image/png" href="/favicon.png"/>
+    <meta charset="UTF-8">
+    <meta name="description" content="Simple Headline Reader">
+    <meta name="keywords" content="Headlines, News, RSS, Reader, Pytorch, Bert, OpenSource">
+    <meta name="author" content="aveygo@github.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div id="wrapper">
+        <div id="header">
+            <h1>
+                Semantic News
+            </h1>
+            <h3>
+                Only top headlines; no gossip, no ads, no clickbait, no nonsense.
+            </h3>
+            <h3>
+                Global news, updated hourly, sorted by distance to closest one of 6 clusters.
+            </h3>
+            <h3>
+                View my source code on <a href="http://example.com">GitHub</a>.
+            </h3>
+        </div>
+        <div id="tile" class="template">
+            <div class="content">
+                <b class="headline">Sample headline 1 that is really long</b>
+                <p class="source">Guardian news whatever</p>
+                <p class="summary">This is the summary..</p>
+            </div>
+            <div class="image">
+            
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+
+var SRC = "/feed/headlines"; // ?limit=10&offset=0
+
+function getHeadlines(offset) {
+
+    fetch(SRC + "?limit=10&offset=" + offset)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(json) {
+            console.log(json);
+            var tile = document.getElementsByClassName("template")[0];            
+            var parent = tile.parentNode;
+
+            if (json.length == 0) {
+                var clone = tile.cloneNode(true);
+                clone.classList.remove("template");
+                clone.innerHTML = "Please wait for headlines to be fetched...";
+                clone.style.color = "#BBB";
+                parent.appendChild(clone);
+                return;
+            }
+
+            for (var i = 0; i < json.length; i++) {
+                let headline = json[i];
+                var clone = tile.cloneNode(true);
+                
+                // add onlick event
+                let raw_link = headline.link;
+                clone.onclick = function() {
+                    window.open(raw_link, '_blank');
+                };
+
+                // shorten url to max 100 chars
+                if (headline.link.length > 100) {
+                    headline.link = headline.link.substring(0, 100) + "  ...";
+                }
+
+                // shorten summary to max 200 chars
+                if (headline.summary.length > 200) {
+                    headline.summary = headline.summary.substring(0, 200) + "  ...";
+                }
+
+                // Remove images from summary
+                headline.summary = headline.summary.replace(/<img[^>]*>/g,"");
+
+                // remove template class
+                clone.classList.remove("template");
+                console.log(clone);
+
+                // Convert epoch to hours ago
+                var date = new Date(headline.published * 1000);
+                var hours = Math.floor((new Date() - date) / 1000 / 60 / 60);
+                if (hours < 1) {
+                    headline.published = "Just now (<1 hour)";
+                } else if (hours < 24) {
+                    headline.published = hours + " hours ago";
+                } else {
+                    if ( Math.floor(hours / 24) == 1) {
+                        headline.published = "1 day ago";
+                    } else {
+                        headline.published = Math.floor(hours / 24) + " days ago";
+                    }
+                }
+
+                // Might not have a summary
+                if (!headline.summary) {
+                    headline.summary = "No description available."
+                }
+
+                // set headline data
+                clone.getElementsByClassName("content")[0].getElementsByClassName("headline")[0].innerHTML = headline.title;
+                clone.getElementsByClassName("content")[0].getElementsByClassName("source")[0].innerHTML = headline.source_name + " - " + headline.link + "</br>" + headline.published;
+                clone.getElementsByClassName("content")[0].getElementsByClassName("summary")[0].innerHTML = headline.summary;
+
+                // add image
+                if (headline.media) {
+                    var img = document.createElement("img");
+                    img.src = headline.media;
+                    img.alt = "Image for " + headline.title;
+                    clone.getElementsByClassName("image")[0].appendChild(img);
+                } else {
+                    clone.getElementsByClassName("image")[0].style.display = "none";
+                }
+                
+                parent.appendChild(clone);
+            }
+        });
+}
+
+// scroll to bottom to load more headlines
+var timeout;
+
+window.onscroll = function(ev) {
+    clearTimeout(timeout);
+    timeout = setTimeout(function() {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+            var tiles = document.getElementsByClassName("headline");
+            var offset = tiles.length - 1;
+            getHeadlines(offset);
+        }
+    }, 100);
+};
+
+getHeadlines(0);
+
+</script>
+
+<style>
+
+body {
+    background-color: #121212;
+}
+
+#wrapper {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#header {
+    color: #DDD;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    margin: 50px 50px 50px 50px;
+    text-align: center;
+}
+
+h3 a {
+    color: #55D;
+    text-decoration: none;
+}
+
+h3 {
+    font-size: max(24px, 1vw);
+    line-height: 1em;
+    color: #BBB;
+}
+
+#header h1 {
+    font-size: max(72px, 1.5vw);
+    line-height: max(72px, 1.5vw);
+    color: #DDD;
+}
+
+.template {
+    display: none !important;
+
+}
+
+#tile {
+    border: 1px solid #333;
+    background-color: #ffffff11;
+    margin: 10px;
+    padding: 40px 50px 50px 50px;
+    width: 30%;
+    min-width: 900px;
+    max-width: 100%;
+    
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 5px;
+    
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+
+.content {
+    flex: 1;
+    width:100%;
+}
+
+.headline {
+    font-size: 1.5em;
+    line-height: 1em;
+    color: #DDD;
+}
+
+.source {
+    width: 100%;
+    font-size: 1em;
+    line-height: 1.1em;
+    color: #BBB;
+}
+.summary {
+    padding-top: 1em;
+    font-size: 1.0em;
+    line-height: 1.2em;
+    color: #999;
+}
+
+.image {
+    margin-left: 20px;
+
+    border-radius: 5px;
+
+    min-width: 200px;
+    min-height: 150px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+img {
+
+    height: 200px;
+    border-radius: 5px;
+
+}
+
+@media (max-width: 1000px) {
+    #tile {
+        flex-direction: column;
+        align-items: center;
+        min-width: calc(100% - 100px);
+        padding: 30px 20px 30px 20px;
+        margin-bottom: 50px;
+        margin-left: 20px;
+        margin-right: 20px;
+    }
+
+    .image {
+        margin-left: 0px;
+        margin-top: 20px;
+        min-width: 100%;
+        min-height: 200px;
+    }
+
+    img {
+        width: 50%;
+        height: auto;
+        border-radius: 5px;
+        padding: 0 50 0 50;
+    }
+
+    .content {
+        width: 100%;
+    }
+    
+}
+
+</style>
