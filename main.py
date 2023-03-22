@@ -26,7 +26,7 @@ def mse(x, y):
         y = d.decode(y)
         return 1 / (1 + np.mean(x-y) ** 2)
     except:
-        return 1000
+        return 0
 
 #conn = sqlite3.connect('news.db', check_same_thread=False)
 #c = conn.cursor()
