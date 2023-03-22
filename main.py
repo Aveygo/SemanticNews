@@ -20,10 +20,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def mse(x, y):
+    try:
+        x = d.decode(x)
+        y = d.decode(y)
+        return 1 / (1 + np.mean(x-y) ** 2)
+    except:
+        return 1000
+
 #conn = sqlite3.connect('news.db', check_same_thread=False)
 #c = conn.cursor()
 d.c.execute('''CREATE TABLE IF NOT EXISTS news (news_id INTEGER PRIMARY KEY AUTOINCREMENT, title text, link text, summary text, published text, source text, source_name text, media text, compvec text)''')
-d.conn.create_function("mse", 2, lambda x, y: 1 / (1 + np.mean((d.decode(x) - d.decode(y)) ** 2)))
+d.conn.create_function("mse", 2, lambda x, y: mse(x, y))
 
 @app.get("/")
 async def root():
