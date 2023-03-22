@@ -48,7 +48,7 @@ class Downloader(threading.Thread):
         try:
             return np.frombuffer(zlib.decompress(base64.urlsafe_b64decode(x)), dtype=np.float16)
         except:
-            return np.ones(300) * 1000
+            return np.ones(192) * 1000
     
     def kmeans(self, vectors:np.ndarray, num_clusters=5, max_iterations=50) -> list[np.ndarray]:
         """
