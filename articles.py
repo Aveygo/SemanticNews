@@ -4,6 +4,47 @@ from transformers import DistilBertTokenizerFast
 from onnxruntime import InferenceSession
 import torch, numpy as np, base64, zlib, time, os
 
+class SQLQueue(threading.Thread):
+    def __init__(self, db_path):
+        threading.Thread.__init__(self)
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.c = self.conn.cursor()
+
+        self.queue = queue.Queue()
+        self.results = queue.Queue()
+
+    def fetchall(self, sql:str, values:tuple=()):
+        query_id = os.urandom(16).hex()
+        self.queue.put((sql, values, query_id, "fetchall"))
+        self.queue.join()
+        return self.results.get()[1]
+    
+    def fetchone(self, sql:str, values:tuple=()):
+        query_id = os.urandom(16).hex()
+        self.queue.put((sql, values, query_id, "fetchone"))
+        self.queue.join()
+        return self.results.get()[1]
+    
+    def execute(self, sql:str, values:tuple=()):
+        query_id = os.urandom(16).hex()
+        self.queue.put((sql, values, query_id, "execute"))
+        self.queue.join()
+        return self.results.get()[1]
+
+    def run(self):
+        while True:
+            sql, values, query_id, type_ = self.queue.get()
+            self.c.execute(sql, values)
+            
+            if type_ == "fetchall":
+                self.results.put((query_id, self.c.fetchall()))
+            elif type_ == "fetchone":
+                self.results.put((query_id, self.c.fetchone()))
+            elif type_ == "execute":
+                self.results.put((query_id, self.conn.commit()))
+            
+            self.queue.task_done()
+
 class Downloader(threading.Thread):
     """
     Main downloader thread, downloads articles from RSS feeds and stores them in a database
@@ -27,10 +68,10 @@ class Downloader(threading.Thread):
         self.model = InferenceSession("model.onnx")
 
         self.logger.info("Loading database...")
-        self.conn = sqlite3.connect('news.db', check_same_thread=False)
-        self.c = self.conn.cursor()
-        self.c.execute('''CREATE TABLE IF NOT EXISTS news
-                        (news_id INTEGER PRIMARY KEY AUTOINCREMENT, title text, link text, summary text, published integer, source text, source_name text, media text, compvec text)''')
+        self.conn = SQLQueue("news.db")
+        self.conn.start()
+
+        self.conn.execute('CREATE TABLE IF NOT EXISTS news (news_id INTEGER PRIMARY KEY AUTOINCREMENT, title text, link text, summary text, published integer, source text, source_name text, media text, compvec text)')
 
         self.download_queue = queue.Queue()
         self.results_queue = queue.Queue()
@@ -88,9 +129,8 @@ class Downloader(threading.Thread):
         """
         Find clusters of articles and calculate a score for each article
         """
-        # Only consider the last 1000 entries
-        self.c.execute("SELECT * FROM news ORDER BY published DESC LIMIT 1000")
-        articles = [self.parse_row(row) for row in self.c.fetchall()]
+        # Only consider the last 500 entries
+        articles = [self.parse_row(row) for row in self.conn.fetchall("SELECT * FROM news ORDER BY published DESC LIMIT 1000", ())]
         decoded = [self.decode(article["compvec"]) for article in articles]
         
         # Calculate the cluster centers
@@ -193,8 +233,7 @@ class Downloader(threading.Thread):
                 link = entry.get("link", "")
                 
                 # check if entry already exists (same link/title), check only last 1000 entries
-                self.c.execute("SELECT * FROM news WHERE link=? OR title=? ORDER BY news_id DESC LIMIT 1000", (link, title))
-                if self.c.fetchone() is None:
+                if self.conn.fetchone("SELECT * FROM news WHERE link=? OR title=? ORDER BY news_id DESC LIMIT 1000", (link, title)) is None:
 
                     num_entries += 1
 
@@ -221,11 +260,9 @@ class Downloader(threading.Thread):
                     else:
                         compvec = ""
                 
-                    self.c.execute("INSERT INTO news (title, link, summary, published, source, source_name, media, compvec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (title, link, summary, published, source, name, media, compvec))
+                    self.conn.execute("INSERT INTO news (title, link, summary, published, source, source_name, media, compvec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (title, link, summary, published, source, name, media, compvec))
 
-            self.conn.commit()
             self.results_queue.task_done()
-
 
 if __name__ == "__main__":
     start = time.time()
