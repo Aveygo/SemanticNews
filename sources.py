@@ -27,7 +27,7 @@ FEEDS = [
     {"name":"Tech Crunch", "url":"https://techcrunch.com/feed/"},
     {"name":"Business Insider", "url":"http://feeds2.feedburner.com/businessinsider"},
     {"name":"China Daily", "url":"http://www.chinadaily.com.cn/rss/world_rss.xml"},
-    {"name":"The Hindu", "url":"https://www.thehindu.com/news/feeder/default.rss"},
+    #{"name":"The Hindu", "url":"https://www.thehindu.com/news/feeder/default.rss"},
     {"name":"Global Times", "url":"http://www.globaltimes.cn/rss/outbrain.xml"},
     {"name":"CoinDesk", "url":"https://feeds.feedburner.com/CoinDesk"},
     {"name":"Fortune", "url":"http://fortune.com/feed/"},
