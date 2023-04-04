@@ -9,7 +9,6 @@
   <img src="https://raw.githubusercontent.com/Aveygo/SemanticNews/main/sample.png">
 </p>
 
-
 Sick of the "computer algorithms" that google news uses, I wanted to make a more open version of a news reader for personal use, with the benifit of zero tracking or cookies.
 
 The theory is that, given a pool of article titles, major events would have similar titles and thus are headlines.
@@ -18,6 +17,8 @@ To compare headlines, semantics are extracted via distilbert-base-uncased, where
 rank headlines based on their distances.
 
 Visit a version of it (running on a raspberry pi 3) [Here](https://semanticnews.dedyn.io:8080/)!
+
+### 5/4 note, will be down for maintenance
 
 ## RSS feed
 
