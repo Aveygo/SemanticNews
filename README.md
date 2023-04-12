@@ -18,8 +18,6 @@ rank headlines based on their distances.
 
 Visit a version of it (running on a raspberry pi 3) [Here](https://semanticnews.dedyn.io:8080/)!
 
-### 5/4 note, will be down for maintenance
-
 ## RSS feed
 
 An rss feed is supported at https://semanticnews.dedyn.io:8080/feed/rss as well as all other [endpoints](https://semanticnews.dedyn.io:8080/docs).
