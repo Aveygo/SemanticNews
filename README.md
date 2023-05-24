@@ -16,11 +16,11 @@ The theory is that, given a pool of article titles, major events would have simi
 To compare headlines, semantics are extracted via distilbert-base-uncased, where we can use k-means to find the center of clusters and
 rank headlines based on their distances.
 
-Visit a version of it (running on a raspberry pi 3) [Here](https://semanticnews.dedyn.io:8080/)!
+Visit a version of it (running on a raspberry pi 3) [Here](https://semanticnews.dedyn.io/)!
 
 ## RSS feed
 
-An rss feed is supported at https://semanticnews.dedyn.io:8080/feed/rss as well as all other [endpoints](https://semanticnews.dedyn.io:8080/docs).
+An rss feed is supported at https://semanticnews.dedyn.io/feed/rss as well as all other [endpoints](https://semanticnews.dedyn.io/docs).
 
 ## Running
 
