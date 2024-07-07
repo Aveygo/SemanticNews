@@ -86,10 +86,7 @@ class Downloader(threading.Thread):
         """
         Compvecs are stored as base64 encoded zlib compressed numpy arrays
         """
-        try:
-            return np.frombuffer(zlib.decompress(base64.urlsafe_b64decode(x)), dtype=np.float16)
-        except:
-            return np.ones(192) * 1000
+        return np.frombuffer(zlib.decompress(base64.urlsafe_b64decode(x)), dtype=np.float16)
     
     def kmeans(self, vectors:np.ndarray, num_clusters=5, max_iterations=50) -> list[np.ndarray]:
         """
@@ -259,8 +256,9 @@ class Downloader(threading.Thread):
                         compvec = self.sentence2compvec(title)
                     else:
                         compvec = ""
-                
-                    self.conn.execute("INSERT INTO news (title, link, summary, published, source, source_name, media, compvec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (title, link, summary, published, source, name, media, compvec))
+                    
+                    if compvec:
+                        self.conn.execute("INSERT INTO news (title, link, summary, published, source, source_name, media, compvec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (title, link, summary, published, source, name, media, compvec))
 
             self.results_queue.task_done()
 
