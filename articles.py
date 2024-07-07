@@ -70,7 +70,6 @@ class Downloader(threading.Thread):
         self.logger.info("Loading database...")
         self.conn = SQLQueue("news.db")
         self.conn.start()
-
         self.conn.execute('CREATE TABLE IF NOT EXISTS news (news_id INTEGER PRIMARY KEY AUTOINCREMENT, title text, link text, summary text, published integer, source text, source_name text, media text, compvec text)')
 
         self.download_queue = queue.Queue()
@@ -86,8 +85,8 @@ class Downloader(threading.Thread):
         """
         Compvecs are stored as base64 encoded zlib compressed numpy arrays
         """
-        return np.frombuffer(zlib.decompress(base64.urlsafe_b64decode(x)), dtype=np.float16)
-    
+        return np.frombuffer(base64.b64decode(x), dtype=np.float16)
+        
     def kmeans(self, vectors:np.ndarray, num_clusters=5, max_iterations=50) -> list[np.ndarray]:
         """
         Find the center of each cluster of a multidimensional array
@@ -122,13 +121,32 @@ class Downloader(threading.Thread):
             "compvec": row[8]
         }
     
+    def discard_old_news(self):
+        self.conn.execute('''
+            SELECT published
+            FROM news
+            ORDER BY published DESC
+            LIMIT 1 OFFSET 999
+        ''')
+        threshold_date = self.conn.c.fetchone()
+
+        if threshold_date:
+            threshold_date = threshold_date[0]
+
+            self.conn.execute('''
+                DELETE FROM news
+                WHERE published < ?
+            ''', (threshold_date,))
+
     def calculate_cache(self) -> dict:
         """
         Find clusters of articles and calculate a score for each article
         """
-        # Only consider the last 500 entries
+        # Only consider the last 1000 entries
+        self.discard_old_news()
         articles = [self.parse_row(row) for row in self.conn.fetchall("SELECT * FROM news ORDER BY published DESC LIMIT 1000", ())]
         decoded = [self.decode(article["compvec"]) for article in articles]
+        decoded = [i for i in decoded if not i is None]
         
         # Calculate the cluster centers
         cache = self.cache
@@ -202,8 +220,8 @@ class Downloader(threading.Thread):
             sentence_embedding = np.mean(token_vecs, axis=0)
         
         vector = sentence_embedding.astype(np.float16)
-        return base64.urlsafe_b64encode(zlib.compress(vector)).decode("utf-8")
-
+        return base64.b64encode(vector).decode("utf-8")
+        
     def feed_thread(self, id):
         """
         Threaded, downloads articles that were added to the download queue and
@@ -256,7 +274,7 @@ class Downloader(threading.Thread):
                         compvec = self.sentence2compvec(title)
                     else:
                         compvec = ""
-                    
+
                     if compvec:
                         self.conn.execute("INSERT INTO news (title, link, summary, published, source, source_name, media, compvec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (title, link, summary, published, source, name, media, compvec))
 
