@@ -1,4 +1,7 @@
-# SemanticNews
+# ⚠️ Moved to [AutoInt](https://github.com/Aveygo/AutoInt)
+
+
+## SemanticNews
 ![Rss](https://img.shields.io/badge/rss-F88900?style=for-the-badge&logo=rss&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
