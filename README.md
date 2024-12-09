@@ -12,7 +12,7 @@
   <img src="https://raw.githubusercontent.com/Aveygo/SemanticNews/main/sample.png">
 </p>
 
-Sick of the "computer algorithms" that google news uses, I wanted to make a more open version of a news reader for personal use, with the benifit of zero tracking or cookies.
+I wanted to make a more open version of a news reader for personal use, with the benifit of zero tracking or cookies.
 
 The theory is that, given a pool of article titles, major events would have similar titles and thus are headlines.
 
